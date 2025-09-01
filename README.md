@@ -24,8 +24,8 @@ A comprehensive attendance tracking system that combines QR code generation, sca
 ### 1. Clone and Setup
 
 ```bash
-git clone https://github.com/yourusername/qr-attendance-system.git
-cd qr-attendance-system
+git clone https://github.com/dkt8/church-attendance-system.git
+cd church-attendance-system
 ```
 
 ### 2. Run Setup Script
@@ -195,8 +195,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 
 1. Check the [documentation](docs/)
-2. Search [existing issues](https://github.com/yourusername/qr-attendance-system/issues)
-3. Create a [new issue](https://github.com/yourusername/qr-attendance-system/issues/new)
+2. Search [existing issues](https://github.com/dkt8/church-attendance-system/issues)
+3. Create a [new issue](https://github.com/dkt8/church-attendance-system/issues/new)
 
 ## 🔮 Roadmap
 
