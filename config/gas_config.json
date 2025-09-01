@@ -1,0 +1,25 @@
+{
+    "deployment": {
+        "description": "QR Code Attendance System",
+        "access": "ANYONE_ANONYMOUS"
+    },
+    "spreadsheet": {
+        "id": "YOUR_SPREADSHEET_ID_HERE",
+        "sheets": {
+            "master": "Master",
+            "attendance_prefix": "attendance_"
+        }
+    },
+    "time_settings": {
+        "early_cutoff": "09:00:00",
+        "late_cutoff": "09:10:00",
+        "skip_window_start": "09:10:00",
+        "skip_window_end": "10:00:00",
+        "afternoon_cutoff": "12:00:00"
+    },
+    "status_codes": {
+        "present": "X",
+        "late": "T",
+        "absent": "O"
+    }
+}

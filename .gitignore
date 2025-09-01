@@ -1,0 +1,102 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+myenv/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Output directories (can be regenerated)
+output/generated/
+*.zip
+
+# Sensitive configuration files
+config/secrets.json
+config/private.json
+.env.local
+.env.production
+.env.development
+
+# Generated QR codes and cards (keep structure, ignore content)
+assets/qr_codes/*.png
+assets/id_cards/*_card/
+output/**/
+
+# Keep directory structure but ignore contents
+!assets/qr_codes/.gitkeep
+!assets/id_cards/.gitkeep
+!output/.gitkeep
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+
+# Google Apps Script deployment
+.clasp.json

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #FFF9C4;
+            /* Warm yellow */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #007BFF;
+        }
+
+        h1 {
+            color: #007BFF;
+            font-size: 31px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        #reader {
+            width: 600px;
+            height: 600px;
+            border: 4px solid #007BFF;
+            border-radius: 12px;
+            background-color: #fff;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+
+        #status {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 12px;
+            text-align: center;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        #status.success {
+            color: #28a745;
+            /* Green */
+        }
+
+        #status.error {
+            color: #d32f2f;
+            /* Red */
+        }
+
+        #status.skipped {
+            color: #F9A825;
+            /* Amber/Gold */
+        }
+
+        .footer {
+            margin-top: 24px;
+            font-size: 18px;
+            color: #888;
+            text-align: center;
+        }
+
+        .button {
+            background-color: #007BFF;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 18px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            width: 240px;
+            text-align: center;
+            margin: 10px 0;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .logo-footer {
+            display: block;
+            width: 100px;
+            margin: 10px auto 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>👦🏻👧🏻 Check-in Ngành Thiếu Nhi 👦🏻👧🏻</h1>
+
+    <p id="status">📡 Scanner is ready. Please scan your name QR.</p>
+
+    <div id="reader"></div>
+
+    <button class="button" onclick="restartScanner()">🔄 Restart Scanner</button>
+
+    <a href="#" class="button" id="sheetsLink" onclick="openSpreadsheet()"
+        style="background-color: #28a745; margin-top: 15px; text-decoration: none;"> View Attendance Sheet</a>
+
+    <div class="footer">Powered by HTBC V2</div>
+    <img class="logo-footer" src="https://i.imgur.com/LozPusk.jpeg" alt="Logo">
+
+    <script>
+        let scannerActive = false;
+        const html5QrCode = new Html5Qrcode("reader");
+
+        function openSpreadsheet() {
+            // Get the URL from the server-side function
+            google.script.run
+                .withSuccessHandler(function (url) {
+                    // Open the spreadsheet in a new tab
+                    window.open(url, 'https://docs.google.com/spreadsheets/d/13AFi7Wp9Sijp6XWDfc1Ce5jW0VlTqvh8x0-Rv7cL0ro/edit?gid=255441271#gid=255441271');
+                })
+                .withFailureHandler(function (error) {
+                    alert('Error opening spreadsheet: ' + error);
+                })
+                .getSpreadsheetUrl();
+        }
+
+        function logData(data) {
+            if (scannerActive) return;
+            scannerActive = true;
+
+            const statusEl = document.getElementById("status");
+            statusEl.textContent = `🔄 Logging: ${data}`;
+            statusEl.className = "";
+
+            google.script.run
+                .withSuccessHandler((response) => {
+                    statusEl.textContent = response;
+
+                    if (response.startsWith("Success")) {
+                        statusEl.classList.add("success");
+                    } else if (response.startsWith("Skipped")) {
+                        statusEl.classList.add("skipped");
+                    } else {
+                        statusEl.classList.add("error");
+                    }
+
+                    scannerActive = false;
+                    startScanner();
+                })
+                .withFailureHandler((error) => {
+                    statusEl.textContent = `❌ Error: ${error}`;
+                    statusEl.classList.add("error");
+                    scannerActive = false;
+                })
+                .logScan(data);
+        }
+        function startScanner() {
+            if (scannerActive) return;
+
+            const statusEl = document.getElementById("status");
+            if (!statusEl.classList.contains("success")) {
+                statusEl.textContent = "🔎 Scanning...";
+                statusEl.className = "";
+            }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 400, height: 400 },
+                },
+                (decodedText) => {
+                    html5QrCode.stop().then(() => logData(decodedText));
+                },
+                (errorMessage) => {
+                    console.warn("QR scan error:", errorMessage);
+                }
+            ).catch((err) => {
+                statusEl.textContent = "❌ Camera access error!";
+                statusEl.className = "error";
+                console.error("Scanner error:", err);
+            });
+        }
+
+        function restartScanner() {
+            html5QrCode.stop().then(() => {
+                scannerActive = false;
+                startScanner();
+            }).catch(() => {
+                scannerActive = false;
+                startScanner();
+            });
+        }
+
+        startScanner();
+    </script>
+</body>
+
+</html>
