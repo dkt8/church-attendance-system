@@ -1,51 +1,51 @@
 {
-    "project": {
-        "name": "QR Code Attendance System",
-        "version": "1.0.0",
-        "description": "A comprehensive attendance tracking system using QR codes and Google Sheets"
+  "project": {
+    "name": "QR Code Attendance System",
+    "version": "1.0.0",
+    "description": "A comprehensive attendance tracking system using QR codes and Google Sheets"
+  },
+  "qr_generation": {
+    "default_output_dir": "output",
+    "qr_size": 10,
+    "border": 4,
+    "error_correction": "M"
+  },
+  "image_processing": {
+    "card_size": {
+      "width": 340,
+      "height": 227
     },
-    "qr_generation": {
-        "default_output_dir": "output",
-        "qr_size": 10,
-        "border": 4,
-        "error_correction": "M"
+    "qr_position": {
+      "x": 125,
+      "y": 255
     },
-    "image_processing": {
-        "card_size": {
-            "width": 340,
-            "height": 227
-        },
-        "qr_position": {
-            "x": 125,
-            "y": 255
-        },
-        "text_positions": {
-            "saint_name": {
-                "x": 800,
-                "y": 300
-            },
-            "full_name": {
-                "x": 800,
-                "y": 400
-            }
-        },
-        "font": {
-            "path": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-            "size": 50,
-            "color": [
-                0,
-                0,
-                0,
-                255
-            ]
-        }
+    "text_positions": {
+      "saint_name": {
+        "x": 800,
+        "y": 300
+      },
+      "full_name": {
+        "x": 800,
+        "y": 400
+      }
     },
-    "csv_structure": {
-        "columns": {
-            "saint_name": 1,
-            "first_name": 2,
-            "last_name": 3
-        },
-        "skip_header": true
+    "font": {
+      "path": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+      "size": 50,
+      "color": [
+        0,
+        0,
+        0,
+        255
+      ]
     }
+  },
+  "csv_structure": {
+    "columns": {
+      "saint_name": 1,
+      "first_name": 2,
+      "last_name": 3
+    },
+    "skip_header": true
+  }
 }

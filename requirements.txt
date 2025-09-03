@@ -1,8 +1,8 @@
 # QR Code generation
 qrcode[pil]==7.4.2
 
-# Image processing
-Pillow==10.0.1
+# Image processing - updated for Python 3.13 compatibility
+Pillow>=10.0.1
 
 # CSV handling (built-in, but documenting for clarity)
 # csv
@@ -11,6 +11,6 @@ Pillow==10.0.1
 # opencv-python==4.8.1.78
 
 # Development dependencies (uncomment if needed)
-# black==23.7.0
-# flake8==6.0.0
+black==23.7.0
+flake8==6.0.0
 # pytest==7.4.0
