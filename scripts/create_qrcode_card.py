@@ -2,6 +2,7 @@ import csv
 import os
 import sys
 from pathlib import Path
+
 import qrcode
 from PIL import Image
 
@@ -33,7 +34,7 @@ def main():
             print(f"   - data/card_background/{csv_filename}.png")
             print(f"   - data/card_background/{csv_filename}_background.png")
             sys.exit(1)
-    
+
     print(f"🖼️  Using background: {background_path}")
 
     # Determine output path
@@ -68,7 +69,7 @@ def main():
                 if name:  # Check if the name is not empty
                     # Load background image
                     background = Image.open(background_path)
-                    
+
                     # Generate QR code
                     qr = qrcode.QRCode(
                         version=1,
@@ -78,28 +79,30 @@ def main():
                     )
                     qr.add_data(f"{name} {csv_filename}")
                     qr.make(fit=True)
-                    
+
                     # Create QR code image
                     qr_img = qr.make_image(fill_color="black", back_color="white")
-                    
+
                     # Resize QR code to fit nicely on card (adjust size as needed)
                     qr_size = 450  # pixels
                     qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
-                    
+
                     # Calculate position based on percentage from edges
                     bg_width, bg_height = background.size
-                    
+
                     # Simple positioning settings (adjust these percentages)
-                    horizontal_percent = 32  # % from left edge (0% = left, 100% = right)
-                    vertical_percent = 60    # % from top edge (0% = top, 100% = bottom)
-                    
+                    horizontal_percent = (
+                        32  # % from left edge (0% = left, 100% = right)
+                    )
+                    vertical_percent = 60  # % from top edge (0% = top, 100% = bottom)
+
                     # Calculate QR position (center the QR at the percentage point)
                     qr_x = int(bg_width * horizontal_percent / 100) - (qr_size // 2)
                     qr_y = int(bg_height * vertical_percent / 100) - (qr_size // 2)
-                    
+
                     # Paste QR code onto background
                     background.paste(qr_img, (qr_x, qr_y))
-                    
+
                     # Save the combined image
                     output_filename = f"{name} {csv_filename}.png"
                     output_filepath = os.path.join(output_path, output_filename)

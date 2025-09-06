@@ -2,6 +2,7 @@ import csv
 import os
 import sys
 from pathlib import Path
+
 import qrcode
 
 

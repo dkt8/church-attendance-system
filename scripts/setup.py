@@ -3,22 +3,26 @@
 Setup script for QR Code Attendance System
 """
 
+import json
 import os
 import subprocess
 import sys
-import json
 from pathlib import Path
+
 
 def run_command(command, description):
     """Run a shell command and handle errors"""
     print(f"⏳ {description}...")
     try:
-        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            command, shell=True, check=True, capture_output=True, text=True
+        )
         print(f"✅ {description} completed successfully")
         return result.stdout
     except subprocess.CalledProcessError as e:
         print(f"❌ {description} failed: {e.stderr}")
         return None
+
 
 def create_virtual_environment():
     """Create a Python virtual environment"""
@@ -26,14 +30,18 @@ def create_virtual_environment():
     if venv_path.exists():
         print("✅ Virtual environment already exists")
         return True
-    
+
     return run_command("python3 -m venv venv", "Creating virtual environment")
+
 
 def install_dependencies():
     """Install Python dependencies"""
-    activate_cmd = "source venv/bin/activate" if os.name != 'nt' else "venv\\Scripts\\activate"
+    activate_cmd = (
+        "source venv/bin/activate" if os.name != "nt" else "venv\\Scripts\\activate"
+    )
     pip_cmd = f"{activate_cmd} && pip install -r requirements.txt"
     return run_command(pip_cmd, "Installing Python dependencies")
+
 
 def check_node_and_install_clasp():
     """Check Node.js and install clasp for Google Apps Script deployment"""
@@ -45,23 +53,27 @@ def check_node_and_install_clasp():
         print("   - Windows: Download from https://nodejs.org")
         print("   - Linux: Use your package manager (e.g., apt install nodejs npm)")
         return False
-    
+
     print(f"✅ Node.js is installed: {node_check.strip()}")
-    
+
     # Check if clasp is already installed
     clasp_check = run_command("clasp --version", "Checking clasp installation")
     if clasp_check:
         print(f"✅ clasp is already installed: {clasp_check.strip()}")
         return True
-    
+
     # Install clasp
-    result = run_command("npm install -g @google/clasp@2.4.2", "Installing Google Apps Script CLI (clasp) stable version")
+    result = run_command(
+        "npm install -g @google/clasp@2.4.2",
+        "Installing Google Apps Script CLI (clasp) stable version",
+    )
     return result is not None
+
 
 def setup_clasp_config():
     """Set up clasp configuration files"""
     gas_dir = Path("src/google_apps_script")
-    
+
     # Create .claspignore file
     claspignore_content = """# Ignore everything except specific files
 **/**
@@ -69,15 +81,15 @@ def setup_clasp_config():
 !Index.html
 !appsscript.json
 """
-    
+
     claspignore_path = gas_dir / ".claspignore"
     if not claspignore_path.exists() or claspignore_path.stat().st_size == 0:
-        with open(claspignore_path, 'w') as f:
+        with open(claspignore_path, "w") as f:
             f.write(claspignore_content)
         print("✅ Created .claspignore file")
     else:
         print("✅ .claspignore file already exists")
-    
+
     # Create appsscript.json if it doesn't exist or is empty
     appsscript_path = gas_dir / "appsscript.json"
     if not appsscript_path.exists() or appsscript_path.stat().st_size == 0:
@@ -86,18 +98,15 @@ def setup_clasp_config():
             "dependencies": {},
             "exceptionLogging": "STACKDRIVER",
             "runtimeVersion": "V8",
-            "webapp": {
-                "access": "ANYONE_ANONYMOUS",
-                "executeAs": "USER_DEPLOYING"
-            }
+            "webapp": {"access": "ANYONE_ANONYMOUS", "executeAs": "USER_DEPLOYING"},
         }
-        
-        with open(appsscript_path, 'w') as f:
+
+        with open(appsscript_path, "w") as f:
             json.dump(appsscript_content, f, indent=2)
         print("✅ Created appsscript.json file")
     else:
         print("✅ appsscript.json file already exists")
-    
+
     # Create deployment script if it doesn't exist or is empty
     deploy_script_path = gas_dir / "deploy.sh"
     if not deploy_script_path.exists() or deploy_script_path.stat().st_size == 0:
@@ -264,77 +273,84 @@ if [[ "$open_editor" =~ ^[Yy]$ ]]; then
     clasp open
 fi
 '''
-        
-        with open(deploy_script_path, 'w') as f:
+
+        with open(deploy_script_path, "w") as f:
             f.write(deploy_script_content)
-        
+
         # Make the script executable
         import stat
+
         current_permissions = deploy_script_path.stat().st_mode
         deploy_script_path.chmod(current_permissions | stat.S_IEXEC)
-        
+
         print("✅ Created deploy.sh script and made it executable")
     else:
         print("✅ deploy.sh script already exists")
-    
+
     return True
+
 
 def setup_git():
     """Initialize git repository if not already done"""
     if Path(".git").exists():
         print("✅ Git repository already initialized")
         return True
-    
+
     commands = [
         "git init",
         "git add .",
-        "git commit -m 'Initial commit: Project restructure'"
+        "git commit -m 'Initial commit: Project restructure'",
     ]
-    
+
     for cmd in commands:
         if not run_command(cmd, f"Git: {cmd}"):
             return False
-    
+
     return True
+
 
 def create_example_config():
     """Create example configuration files"""
     config_path = Path("config/settings.json")
     if config_path.exists():
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
-        
+
         # Update paths to be relative to project root
-        config['qr_generation']['default_output_dir'] = "output"
-        
-        with open(config_path, 'w') as f:
+        config["qr_generation"]["default_output_dir"] = "output"
+
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
-        
+
         print("✅ Updated configuration file")
-    
+
     return True
+
 
 def main():
     """Main setup function"""
     print("🚀 Setting up QR Code Attendance System")
     print("=" * 50)
-    
+
     # Check Python version
     if sys.version_info < (3, 7):
         print("❌ Python 3.7 or higher is required")
         sys.exit(1)
-    
+
     print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} detected")
-    
+
     # Setup steps
     steps = [
         ("Creating virtual environment", create_virtual_environment),
         ("Installing dependencies", install_dependencies),
         ("Setting up Git repository", setup_git),
         ("Creating example configurations", create_example_config),
-        ("Setting up Google Apps Script deployment", lambda: check_node_and_install_clasp() and setup_clasp_config()),
+        (
+            "Setting up Google Apps Script deployment",
+            lambda: check_node_and_install_clasp() and setup_clasp_config(),
+        ),
     ]
-    
+
     for description, func in steps:
         try:
             if not func():
@@ -352,7 +368,7 @@ def main():
                 print(f"❌ Setup failed at: {description}")
                 print(f"Error: {str(e)}")
                 sys.exit(1)
-    
+
     print("\n🎉 Setup completed successfully!")
     print("\nNext steps:")
     print("1. Activate the virtual environment: source venv/bin/activate")
@@ -363,6 +379,7 @@ def main():
     print("   - Go to src/google_apps_script/")
     print("   - Run: ./deploy.sh")
     print("   - Follow the prompts to deploy your attendance system")
+
 
 if __name__ == "__main__":
     main()

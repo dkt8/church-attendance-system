@@ -1,5 +1,5 @@
 # Ignore everything except specific files
 **/**
-!Code.gs
-!Index.html
+!Code.js
+!Scanner.html
 !appsscript.json
