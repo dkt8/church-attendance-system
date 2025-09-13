@@ -1,11 +1,11 @@
-// === QR Attendance Script - V2.5.0 ===
+// === QR Attendance Script - V3.0.1 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
 
 // Spreadsheet ID mapping for each class
 const SPREADSHEET_MAP = {
-  // TODO: Replace with actual IDs
+  // chien con
   'c1': '1DdJbRdQ2gcf90_Ac1U7K9k2MlyNQZWF7fz1YLp9EzaM',
   'c2': '1bSayPQafLXuOgM_gPdGP6LWQ7n-qwmB94cpujBnMqGE',
   // au nhi

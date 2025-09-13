@@ -20,19 +20,21 @@
 
         h1 {
             color: #007BFF;
-            font-size: 31px;
-            margin-bottom: 12px;
+            font-size: 36px;
+            margin-bottom: 14px;
             text-align: center;
         }
 
         #reader {
-            width: 600px;
-            height: 600px;
-            border: 4px solid #007BFF;
-            border-radius: 12px;
+            width: 690px;
+            height: 690px;
+            border: 5px solid #007BFF;
+            border-radius: 14px;
             background-color: #fff;
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
             overflow: hidden;
+            max-width: 92vw;
+            max-height: 92vw;
         }
 
         #reader video {
@@ -42,12 +44,12 @@
         }
 
         #status {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            margin-top: 12px;
+            margin-top: 14px;
             text-align: center;
             width: 80%;
-            max-width: 600px;
+            max-width: 690px;
         }
 
         #status.success {
@@ -66,8 +68,8 @@
         }
 
         .footer {
-            margin-top: 24px;
-            font-size: 18px;
+            margin-top: 28px;
+            font-size: 21px;
             color: #888;
             text-align: center;
         }
@@ -77,13 +79,13 @@
             color: white;
             font-weight: bold;
             border: none;
-            padding: 18px 24px;
-            border-radius: 10px;
+            padding: 21px 28px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 24px;
-            width: 260px;
+            font-size: 28px;
+            width: 300px;
             text-align: center;
-            margin: 10px 0;
+            margin: 12px 0;
             transition: background-color 0.3s ease, transform 0.1s ease;
         }
 
@@ -94,13 +96,53 @@
 
         .logo-footer {
             display: block;
-            width: 100px;
-            margin: 10px auto 0 auto;
+            width: 115px;
+            margin: 12px auto 0 auto;
+        }
+
+        /* Guide / Help floating button */
+        .guide-link {
+            position: fixed;
+            top: 14px;
+            right: 16px;
+            background: #ffffff;
+            color: #fff;
+            width: 53px;
+            height: 53px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 30px;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            z-index: 1000;
+        }
+
+        .guide-link:hover {
+            background: #0056b3;
+            transform: scale(1.08);
+        }
+
+        @media (max-width: 640px) {
+            .guide-link {
+                width: 90px;
+                height: 90px;
+                font-size: 50px;
+                top: 9px;
+                right: 12px;
+            }
         }
     </style>
 </head>
 
 <body>
+    <!-- Guide button: Replace href with actual guide document URL -->
+    <a class="guide-link"
+        href="https://docs.google.com/document/d/1P9x6EGT_clftXwISN9QCnbVhedvF7eEu/edit?usp=sharing&ouid=108116573854889015450&rtpof=true&sd=true"
+        target="_blank" rel="noopener" aria-label="Hướng dẫn / Guide" title="Hướng dẫn">❓</a>
     <h1>👦🏻👧🏻 Điểm Danh Thiếu Nhi 👦🏻👧🏻</h1>
 
     <p id="status">Máy Quét Sẵn Sàng!</p>
@@ -109,13 +151,13 @@
 
     <button class="button" onclick="restartScanner()">🔄 Khởi Động Lại</button>
 
-    <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:15px;">
-        <select id="classSelect" class="button" style="background-color:#28a745; width:280px;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:18px;">
+        <select id="classSelect" class="button" style="background-color:#28a745; width:322px;">
             <option value="" disabled selected>Mở Sổ Điểm Danh</option>
         </select>
     </div>
 
-    <div class="footer">Powered by HTBC V2.3.0</div>
+    <div class="footer">Powered by HTBC V3.0.1</div>
     <img class="logo-footer" src="https://i.imgur.com/LozPusk.jpeg" alt="Logo">
 
     <script>
@@ -242,7 +284,7 @@
                 { facingMode: "environment" },
                 {
                     fps: 10,
-                    qrbox: { width: 400, height: 400 },
+                    qrbox: { width: 460, height: 460 }, // 400 * 1.15
                 },
                 (decodedText) => {
                     html5QrCode.stop().then(() => {
