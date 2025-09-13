@@ -81,7 +81,7 @@
             border-radius: 10px;
             cursor: pointer;
             font-size: 24px;
-            width: 240px;
+            width: 260px;
             text-align: center;
             margin: 10px 0;
             transition: background-color 0.3s ease, transform 0.1s ease;
@@ -101,16 +101,19 @@
 </head>
 
 <body>
-    <h1>👦🏻👧🏻 Check-in Ngành Thiếu Nhi 👦🏻👧🏻</h1>
+    <h1>👦🏻👧🏻 Điểm Danh Thiếu Nhi 👦🏻👧🏻</h1>
 
-    <p id="status">⚡ High-Speed Scanner Ready - No waiting between scans!</p>
+    <p id="status">Máy Quét Sẵn Sàng!</p>
 
     <div id="reader"></div>
 
-    <button class="button" onclick="restartScanner()">🔄 Restart Scanner</button>
+    <button class="button" onclick="restartScanner()">🔄 Khởi Động Lại</button>
 
-    <a href="#" class="button" id="sheetsLink" onclick="openSpreadsheet()"
-        style="background-color: #28a745; margin-top: 15px; text-decoration: none;"> View Attendance Sheet</a>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:15px;">
+        <select id="classSelect" class="button" style="background-color:#28a745; width:280px;">
+            <option value="" disabled selected>Mở Sổ Điểm Danh</option>
+        </select>
+    </div>
 
     <div class="footer">Powered by HTBC V2.3.0</div>
     <img class="logo-footer" src="https://i.imgur.com/LozPusk.jpeg" alt="Logo">
@@ -122,83 +125,103 @@
         let scannerActive = false;
         const html5QrCode = new Html5Qrcode("reader");
 
-        function openSpreadsheet() {
+        let classUrls = {}; // code -> url
+
+        function populateClassDropdown() {
             google.script.run
-                .withSuccessHandler(function (url) {
-                    window.open(url, 'https://docs.google.com/spreadsheets/d/13AFi7Wp9Sijp6XWDfc1Ce5jW0VlTqvh8x0-Rv7cL0ro/edit?usp=sharing');
+                .withSuccessHandler(function (list) {
+                    const select = document.getElementById('classSelect');
+                    list.forEach(entry => {
+                        const opt = document.createElement('option');
+                        opt.value = entry.code;
+                        opt.textContent = entry.code.toUpperCase();
+                        select.appendChild(opt);
+                        classUrls[entry.code] = entry.url;
+                    });
                 })
-                .withFailureHandler(function (error) {
-                    alert('Error opening spreadsheet: ' + error);
+                .withFailureHandler(function (err) {
+                    console.error('Failed to load classes', err);
                 })
-                .getSpreadsheetUrl();
+                .getClassList();
         }
+
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.id === 'classSelect') {
+                const code = e.target.value;
+                if (code && classUrls[code]) {
+                    window.open(classUrls[code], '_blank');
+                    // Reset back to placeholder after opening for quick re-use (optional)
+                    setTimeout(() => { e.target.selectedIndex = 0; }, 400);
+                }
+            }
+        });
 
         function logData(data) {
             if (scannerActive) return;
-            
+
             // Add to queue
             scanQueue.push({ data: data, timestamp: new Date() });
-            
+
             // Extract name without class for display
             const parts = data.trim().split(/\s+/);
             const className = parts.pop();
             const nameOnly = parts.join(" ");
-            
+
             // Update status with queue info
             const statusEl = document.getElementById("status");
             statusEl.textContent = `✅ Queued: ${nameOnly} (${scanQueue.length} pending)`;
             statusEl.className = "success";
-            
+
             // Restart scanner IMMEDIATELY - don't wait for processing
             scannerActive = false;
             startScanner();
-            
+
             // Start or continue processing chain
             if (!isProcessing) {
                 processNextScan();
             }
         }
-        
+
         function processNextScan() {
             if (scanQueue.length === 0) {
                 isProcessing = false;
                 return;
             }
-            
+
             isProcessing = true;
             const nextScan = scanQueue.shift();
-            
+
             // Extract name for display
             const parts = nextScan.data.trim().split(/\s+/);
             const className = parts.pop();
             const nameOnly = parts.join(" ");
-            
+
             // Update status during processing
             const statusEl = document.getElementById("status");
             statusEl.textContent = `⏳ Processing: ${nameOnly} (${scanQueue.length} remaining)`;
             statusEl.className = "";
-            
+
             // Process with google.script.run
             google.script.run
-                .withSuccessHandler(function(result) {
+                .withSuccessHandler(function (result) {
                     console.log("Processed: " + result);
-                    
+
                     // Update status only if queue is empty
                     if (scanQueue.length === 0) {
                         statusEl.textContent = `✅ All processed - Ready for scanning`;
                         statusEl.className = "success";
                     }
-                    
+
                     // Continue processing next item in queue
                     processNextScan();
                 })
-                .withFailureHandler(function(error) {
+                .withFailureHandler(function (error) {
                     console.error("Error: " + error);
-                    
+
                     // Show error briefly
                     statusEl.textContent = `❌ Error: ${error}`;
                     statusEl.className = "error";
-                    
+
                     // Continue processing even after error
                     setTimeout(() => processNextScan(), 2000);
                 })
@@ -211,7 +234,7 @@
 
             const statusEl = document.getElementById("status");
             if (!statusEl.classList.contains("success") && !statusEl.classList.contains("error")) {
-                statusEl.textContent = "🔎 Scanner active - Ready for next scan";
+                statusEl.textContent = "🔎 Máy Quét Sẵn Sàng!";
                 statusEl.className = "";
             }
 
@@ -248,6 +271,7 @@
             });
         }
 
+        populateClassDropdown();
         startScanner();
     </script>
 </body>
