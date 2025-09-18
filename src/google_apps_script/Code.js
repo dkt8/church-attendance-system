@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.0.1 ===
+// === QR Attendance Script - V3.0.2 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
@@ -82,9 +82,16 @@ function logScan(data) {
   // parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"]
   const parts = data.trim().split(/\s+/);
 
-  const className = parts.pop(); // c1
+  let className = parts.pop(); // c1
   const nameOnly = parts.join(" "); // "Giuse Trần Hoàng Nguyên Khôi"
   const normalized = normalize(nameOnly); // "giusetranhoangnguyenkhoi"
+
+  transfer_students = {"giusenguyengiabao": ["t1","t2"], "annabuingoctu": ["t1","t2"]}; // Example exceptional names
+  // check if student is in transfer list and their student card shows the old class
+  if (normalized in transfer_students && transfer_students[normalized][0] == className) {
+    className = transfer_students[normalized][1]; // update to new class
+    console.log(`Transfer detected: ${nameOnly} from ${transfer_students[normalized][0]} to ${className}`);
+  }
 
   console.log(`Parsed: name="${nameOnly}", class="${className}", normalized="${normalized}"`);
 
@@ -96,6 +103,7 @@ function logScan(data) {
   }
 
   const { spreadsheetId, row } = masterMap[normalized];
+
 
   // Validate that the requested class matches the spreadsheet
   if (!SPREADSHEET_MAP[className] || SPREADSHEET_MAP[className] !== spreadsheetId) {
