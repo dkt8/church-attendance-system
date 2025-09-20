@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.0.2 ===
+// === QR Attendance Script - V3.0.4 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
@@ -23,8 +23,8 @@ const SPREADSHEET_MAP = {
   // hiep si
   'h1': '1Ba2z42eA3ptr6y3d6032mWWceZi4O4DzAld_2vIywvE',
   'h2': '1wAhH1FpNCY7oFtqurRKhL1gIKvmmSBwUP1tVfXBvkfw',
-  // boi duong bi tich  
-  'bdbt': '1DD7kvnhCcpk7i-bBVhfsh5IryrdHeRyb6n9zRDyX4T4'
+  // du truong
+  'du_truong': '1EcPKj3OEI-Iq_El7qyzWdLyRaiZXlcqWRWUIy6YvF3s'
 };
 
 /**
@@ -80,14 +80,15 @@ function logScan(data) {
   // data = "Giuse Trần Hoàng Nguyên Khôi c1 06/08/2019"
   console.log(`logScan start: ${data}`);
 
-  // parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"] or
-  // parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1", "06/08/2019"]
+  // case1: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"] 
+  // case2: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1", "06/08/2019"]
+  // case3: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "du_truong"]
   const parts = data.trim().split(/\s+/);
 
   let className = parts.pop(); // c1 or 06/08/2019
   let birthday = ""; // optional birthday if present
-  // If not class format (char)(int), it's a birthday - pop again for real className
-  if (!/^[a-z]\d+$/.test(className)) {
+  // If first pop matches date format DD/MM/YYYY, it's a birthday - pop again for real className
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(className)) {
     let temp = className;
     className = parts.pop(); // now get the real class name
     birthday = temp; // store birthday if needed
@@ -96,7 +97,7 @@ function logScan(data) {
   const nameOnly = parts.join(" "); // "Giuse Trần Hoàng Nguyên Khôi"
   const normalized = normalize(nameOnly + birthday); // "giusetranhoangnguyenkhoi"
 
-  transfer_students = {"giusenguyengiabao": ["t1","t2"], "annabuingoctu": ["t1","t2"]}; // Example exceptional names
+  transfer_students = { "giusenguyengiabao": ["t1", "t2"], "annabuingoctu": ["t1", "t2"] }; // Example exceptional names
   // check if student is in transfer list and their student card shows the old class
   if (normalized in transfer_students && transfer_students[normalized][0] == className) {
     className = transfer_students[normalized][1]; // update to new class
