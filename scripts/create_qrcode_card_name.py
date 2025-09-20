@@ -1,51 +1,92 @@
 import csv
 import os
+import re
 import sys
 from pathlib import Path
 
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 
+def sanitize_filename(filename):
+    """Remove or replace invalid filename characters"""
+    # Replace invalid characters with underscores
+    invalid_chars = '<>:"/\\|?*'
+    for char in invalid_chars:
+        filename = filename.replace(char, '_')
+    return filename
 
-def draw_name_text(draw, row, font, text_x, text_y):
-    """Draw name text: saint name wrapped at 12 chars, rest wrapped at 12 chars"""
+def wrap_text_to_lines(text, max_chars=12):
+    """Wrap text to lines with maximum character limit"""
+    if not text or len(text) <= max_chars:
+        return [text] if text else []
+    
+    words = text.split()
     lines = []
-    saint_name = row[1].strip()
-    remaining = f"{row[2]} {row[3]}".strip()
+    current = ""
+    
+    for word in words:
+        test = f"{current} {word}".strip()
+        if len(test) <= max_chars:
+            current = test
+        else:
+            if current:
+                lines.append(current)
+            current = word
+    
+    if current:
+        lines.append(current)
+    
+    return lines
 
-    # Apply 12-char line breaking to saint name
-    if len(saint_name) <= 12:
-        lines.append(saint_name)
-    else:
-        words = saint_name.split()
-        current = ""
-        for word in words:
-            test = f"{current} {word}".strip()
-            if len(test) <= 12:
-                current = test
-            else:
-                if current:
-                    lines.append(current)
-                current = word
-        if current:
-            lines.append(current)
 
-    # Apply 12-char line breaking to remaining name
-    if len(remaining) <= 12:
-        lines.append(remaining)
-    else:
-        words = remaining.split()
-        current = ""
-        for word in words:
-            test = f"{current} {word}".strip()
-            if len(test) <= 12:
-                current = test
-            else:
-                if current:
-                    lines.append(current)
-                current = word
-        if current:
-            lines.append(current)
+def create_and_position_qr(qr_img, background):
+    """Create QR code image and position it on the background"""
+    # Resize QR code to fit nicely on card (adjust size as needed)
+    qr_size = 450  # pixels
+    qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+
+    # Calculate position based on percentage from edges
+    bg_width, bg_height = background.size
+
+    # Simple positioning settings (adjust these percentages)
+    horizontal_percent = (
+        32  # % from left edge (0% = left, 100% = right)
+    )
+    vertical_percent = 60  # % from top edge (0% = top, 100% = bottom)
+
+    # Calculate QR position (center the QR at the percentage point)
+    qr_x = int(bg_width * horizontal_percent / 100) - (qr_size // 2)
+    qr_y = int(bg_height * vertical_percent / 100) - (qr_size // 2)
+
+    # === Paste QR code onto background ===
+    background.paste(qr_img, (qr_x, qr_y))
+    return background
+
+
+def draw_name_text(draw, background, saint_name, last_name, first_name, note):
+    """Draw name text: saint name wrapped at 12 chars, rest wrapped at 12 chars"""
+    # Get background dimensions
+    bg_width, bg_height = background.size
+    
+    # Text positioning settings (adjust these percentages)
+    text_horizontal_percent = 77  # % from left edge (centered)
+    text_vertical_percent = 50  # % from top edge
+
+    # Calculate text position
+    text_x = int(bg_width * text_horizontal_percent / 100)
+    text_y = int(bg_height * text_vertical_percent / 100)
+
+    # Modern bold font - great for readability
+    font = ImageFont.truetype(
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf", 60
+    )
+    
+    lines = []
+    remaining = f"{last_name} {first_name} {note}".strip()
+
+    # Apply 12-char line breaking using helper function
+    lines.extend(wrap_text_to_lines(saint_name, 12))
+    lines.extend(wrap_text_to_lines(remaining, 12))
 
     # Draw centered text block
     line_spacing = 60
@@ -64,11 +105,8 @@ def draw_name_text(draw, row, font, text_x, text_y):
 def main():
     # Check if CSV file path is provided
     if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print("Usage: python3 create_qrcode.py <csv_input_path> [output_path]")
-        print("Example: python3 create_qrcode.py data/csv_files/au1.csv")
-        print(
-            "Example: python3 create_qrcode.py data/csv_files/au1.csv output/au1_qrcodes"
-        )
+        print("Usage:   python3 (my_script_name)                   (my_input_data)")
+        print("Example: python3 scripts/create_qrcode_card_name.py data/csv_files/2025_26/c1.csv")
         sys.exit(1)
 
     # Check if the CSV file exists
@@ -113,78 +151,60 @@ def main():
             next(csv_reader)  # Skip the header row
 
             for index, row in enumerate(csv_reader):
-                # only process student record (e.g. 1 ,Têrêsa Calcutta, Trần Di An)
-                if not row[0].isdigit():
+                # only process row with student record (e.g. | 1 | Têrêsa Calcutta | Trần Di An |)
+                # TODO: adjust số thứ tự (STT) column index if needed to match the CSV structure
+                column_index = 1
+
+                # Check if note field contains a date (e.g. 06/08/2019, 06-08-2019)
+                # use this to classify same name students in the same class 
+                note = row[column_index-1].strip() 
+                note = note if re.match(r'\d{1,2}/\d{1,2}/\d{4}', note) else ""
+
+                saint_name = row[column_index+1].strip() # Têrêsa Calcutta
+                last_name = row[column_index+2].strip() # Trần Di
+                first_name = row[column_index+3].strip() # An
+
+                # "Têrêsa Calcutta Trần Di An"
+                name = f"{saint_name} {last_name} {first_name}".replace("\xa0", "").strip()
+
+                # if either name or số thứ tự (STT) is missing, skip this row
+                if not name or not row[column_index].isdigit():
                     continue
 
-                # Build the full name from columns 1, 2, 3 (assuming saint name, first name, last name)
-                name = f"{row[1]} {row[2]} {row[3]}".replace("\xa0", "").strip()
+                # Load background image
+                background = Image.open(background_path)
 
-                if name:  # Check if the name is not empty
-                    # Load background image
-                    background = Image.open(background_path)
+                # Generate QR code
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=8,
+                    border=1,
+                )
 
-                    # Generate QR code
-                    qr = qrcode.QRCode(
-                        version=1,
-                        error_correction=qrcode.constants.ERROR_CORRECT_L,
-                        box_size=8,
-                        border=1,
-                    )
-                    qr.add_data(f"{name} {csv_filename}")
-                    qr.make(fit=True)
+                # Add data to QR code: "Têrêsa Calcutta Trần Di An c1" or "Têrêsa Calcutta Trần Di An c1 06/08/2019"
+                value = f"{name} {csv_filename} {note}".rstrip()
+                qr.add_data(value)
+                qr.make(fit=True)
 
-                    # Create QR code image
-                    qr_img = qr.make_image(fill_color="black", back_color="white")
+                # Create QR code image
+                qr_img = qr.make_image(fill_color="black", back_color="white")
 
-                    # Resize QR code to fit nicely on card (adjust size as needed)
-                    qr_size = 450  # pixels
-                    qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+                # Paste QR code image onto background
+                background = create_and_position_qr(qr_img, background)
 
-                    # Calculate position based on percentage from edges
-                    bg_width, bg_height = background.size
+                # Add name text to the background
+                draw = ImageDraw.Draw(background)
+                draw_name_text(draw, background, saint_name, last_name, first_name, note)
 
-                    # Simple positioning settings (adjust these percentages)
-                    horizontal_percent = (
-                        32  # % from left edge (0% = left, 100% = right)
-                    )
-                    vertical_percent = 60  # % from top edge (0% = top, 100% = bottom)
+                # Save the image (use the QR code value as filename)
+                output_filename = f"{sanitize_filename(value)}.png"
+                
+                output_filepath = os.path.join(output_path, output_filename)
+                background.save(output_filepath)
 
-                    # Calculate QR position (center the QR at the percentage point)
-                    qr_x = int(bg_width * horizontal_percent / 100) - (qr_size // 2)
-                    qr_y = int(bg_height * vertical_percent / 100) - (qr_size // 2)
-
-                    # === Paste QR code onto background ===
-                    background.paste(qr_img, (qr_x, qr_y))
-
-                    # Add name text to the background
-                    draw = ImageDraw.Draw(background)
-
-                    # Text positioning settings (adjust these percentages)
-                    text_horizontal_percent = 77  # % from left edge (centered)
-                    text_vertical_percent = 50  # % from top edge
-
-                    # Calculate text position
-                    text_x = int(bg_width * text_horizontal_percent / 100)
-                    text_y = int(bg_height * text_vertical_percent / 100)
-
-                    # Modern bold font - great for readability
-                    font = ImageFont.truetype(
-                        "/System/Library/Fonts/Supplemental/Arial Bold.ttf", 60
-                    )
-                    # font = ImageFont.truetype("/System/Library/Fonts/HelveticaNeue.ttc", 60)
-                    # font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 60)
-
-                    # === Draw name text ===
-                    draw_name_text(draw, row, font, text_x, text_y)
-
-                    # Save the combined image
-                    output_filename = f"{name} {csv_filename}.png"
-                    output_filepath = os.path.join(output_path, output_filename)
-                    background.save(output_filepath)
-
-                    print(f"✅ Generated card with QR for: {name}")
-                    qr_count += 1
+                print(f"✅ Generated card with QR for: {name}")
+                qr_count += 1
 
     except Exception as e:
         print(f"❌ Error reading CSV file: {e}")

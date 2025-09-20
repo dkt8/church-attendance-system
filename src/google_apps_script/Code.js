@@ -76,15 +76,25 @@ function getSpreadsheetUrl() {
  * - Uses master map to route to correct spreadsheet
  */
 function logScan(data) {
-  // data = "Giuse Trần Hoàng Nguyên Khôi c1";
+  // data = "Giuse Trần Hoàng Nguyên Khôi c1" or
+  // data = "Giuse Trần Hoàng Nguyên Khôi c1 06/08/2019"
   console.log(`logScan start: ${data}`);
 
-  // parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"]
+  // parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"] or
+  // parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1", "06/08/2019"]
   const parts = data.trim().split(/\s+/);
 
-  let className = parts.pop(); // c1
+  let className = parts.pop(); // c1 or 06/08/2019
+  let birthday = ""; // optional birthday if present
+  // If not class format (char)(int), it's a birthday - pop again for real className
+  if (!/^[a-z]\d+$/.test(className)) {
+    let temp = className;
+    className = parts.pop(); // now get the real class name
+    birthday = temp; // store birthday if needed
+  }
+
   const nameOnly = parts.join(" "); // "Giuse Trần Hoàng Nguyên Khôi"
-  const normalized = normalize(nameOnly); // "giusetranhoangnguyenkhoi"
+  const normalized = normalize(nameOnly + birthday); // "giusetranhoangnguyenkhoi"
 
   transfer_students = {"giusenguyengiabao": ["t1","t2"], "annabuingoctu": ["t1","t2"]}; // Example exceptional names
   // check if student is in transfer list and their student card shows the old class
@@ -103,7 +113,6 @@ function logScan(data) {
   }
 
   const { spreadsheetId, row } = masterMap[normalized];
-
 
   // Validate that the requested class matches the spreadsheet
   if (!SPREADSHEET_MAP[className] || SPREADSHEET_MAP[className] !== spreadsheetId) {
@@ -126,7 +135,7 @@ function logScan(data) {
   const ss = String(now.getSeconds()).padStart(2, "0");
   const currentTime = `${hh}:${mm}:${ss}`;
 
-  // Simple: Find today's column directly (no complex caching needed)
+  // Find today's column directly
   const baseCol = findTodayColumn(sheet);
   if (!baseCol) {
     console.log(`Return error: No date column for today`);
@@ -243,12 +252,24 @@ function buildMasterMap() {
           continue;
         }
 
+        // if note exists and is a date, use it. Otherwise empty
+        // cell data: 06/08/2019
+        // format it properly as MM/DD/YYYY with leading zeros
+        let note = "";
+        if (row[0] instanceof Date) {
+          const date = row[0];
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const year = date.getFullYear();
+          note = `${day}/${month}/${year}`;
+        }
+
         const saintName = (row[2] || "").toString().trim();
         const firstName = (row[3] || "").toString().trim();
         const lastName = (row[4] || "").toString().trim();
 
         if (saintName || firstName || lastName) {
-          const fullName = `${saintName} ${firstName} ${lastName}`.trim();
+          const fullName = `${saintName} ${firstName} ${lastName} ${note}`.trim();
           const normalizedName = normalize(fullName);
 
           if (normalizedName) {
