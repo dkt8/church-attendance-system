@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.0.4 ===
+// === QR Attendance Script - V3.1.4 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}

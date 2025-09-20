@@ -74,6 +74,17 @@
             text-align: center;
         }
 
+        .footer a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 6px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
         .button {
             background-color: #007BFF;
             color: white;
@@ -126,6 +137,42 @@
             transform: scale(1.08);
         }
 
+        /* Floating contact (Liên Hệ) button bottom-left */
+        .contact-link {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            background: #ff9800;
+            color: #fff;
+            width: 53px;
+            height: 53px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 30px;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            z-index: 1000;
+        }
+
+        .contact-link:hover {
+            background: #fb8c00;
+            transform: scale(1.08);
+        }
+
+        @media (max-width: 640px) {
+            .contact-link {
+                width: 72px;
+                height: 72px;
+                font-size: 40px;
+                bottom: 12px;
+                left: 12px;
+            }
+        }
+
         @media (max-width: 640px) {
             .guide-link {
                 width: 120px;
@@ -143,6 +190,10 @@
     <a class="guide-link"
         href="https://docs.google.com/document/d/1P9x6EGT_clftXwISN9QCnbVhedvF7eEu/edit?usp=sharing&ouid=108116573854889015450&rtpof=true&sd=true"
         target="_blank" rel="noopener" aria-label="Hướng dẫn / Guide" title="Hướng dẫn">❓</a>
+    <!-- Floating contact button (Liên Hệ / Feedback) -->
+    <a class="contact-link"
+        href="https://docs.google.com/forms/d/e/1FAIpQLSdicw1HVJG--aNlB8PCDZmaOIehidie8CqEnbcxKCxRQg5FcQ/viewform?usp=header"
+        target="_blank" rel="noopener" aria-label="Liên Hệ / Góp Ý" title="Liên Hệ / Góp Ý">💬</a>
     <h1>👦🏻👧🏻 Điểm Danh Thiếu Nhi 👦🏻👧🏻</h1>
 
     <p id="status">Máy Quét Sẵn Sàng!</p>
@@ -157,7 +208,9 @@
         </select>
     </div>
 
-    <div class="footer">Powered by HTBC V3.0.4</div>
+    <div class="footer">
+        Powered by HTBC V3.1.4
+    </div>
     <img class="logo-footer" src="https://i.imgur.com/LozPusk.jpeg" alt="Logo">
 
     <script>
