@@ -327,6 +327,55 @@ def create_example_config():
     return True
 
 
+def setup_zsh_prettification():
+    """Install Oh My Zsh for a prettier terminal"""
+    print("\n🎨 Terminal Beautification")
+    print("=" * 30)
+    
+    # Check if Oh My Zsh is already installed
+    oh_my_zsh_path = Path.home() / ".oh-my-zsh"
+    if oh_my_zsh_path.exists():
+        print("✅ Oh My Zsh is already installed")
+        return True
+    
+    print("📦 Installing Oh My Zsh for prettier terminal...")
+    print("⚠️  Note: This may prompt for user input during installation")
+    
+    # Install Oh My Zsh with unattended installation
+    install_cmd = 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
+    result = run_command(install_cmd, "Installing Oh My Zsh")
+    
+    if result is not None:
+        print("🎉 Oh My Zsh installed successfully!")
+        print("💡 Your terminal will be prettier on next restart")
+        print("💡 Popular themes: 'robbyrussell' (default), 'agnoster', 'powerlevel10k'")
+        print("💡 To change theme: edit ~/.zshrc and change ZSH_THEME")
+        
+        # Set a nice theme by default
+        zshrc_path = Path.home() / ".zshrc"
+        if zshrc_path.exists():
+            try:
+                with open(zshrc_path, 'r') as f:
+                    content = f.read()
+                
+                # Replace the default theme with agnoster (shows git branch nicely)
+                if 'ZSH_THEME="robbyrussell"' in content:
+                    content = content.replace('ZSH_THEME="robbyrussell"', 'ZSH_THEME="agnoster"')
+                    with open(zshrc_path, 'w') as f:
+                        f.write(content)
+                    print("✅ Set theme to 'agnoster' (shows git branches)")
+                
+            except Exception as e:
+                print(f"⚠️  Could not update theme: {e}")
+        
+        return True
+    else:
+        print("⚠️  Oh My Zsh installation failed, but continuing with project setup")
+        print("💡 You can install it manually later with:")
+        print('   sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"')
+        return True
+
+
 def main():
     """Main setup function"""
     print("🚀 Setting up QR Code Attendance System")
@@ -349,6 +398,7 @@ def main():
             "Setting up Google Apps Script deployment",
             lambda: check_node_and_install_clasp() and setup_clasp_config(),
         ),
+        ("Setting up terminal beautification", setup_zsh_prettification),
     ]
 
     for description, func in steps:
@@ -374,11 +424,12 @@ def main():
     print("1. Activate the virtual environment: source venv/bin/activate")
     print("2. Update config/gas_config.json with your Google Sheets ID")
     print("3. Add your student data to data/csv_files/")
-    print("4. Run the QR generation script: python scripts/generate_qr_codes.py")
+    print("4. Run the QR generation script: python scripts/create_qrcode_card_name.py")
     print("5. For Google Apps Script deployment:")
     print("   - Go to src/google_apps_script/")
     print("   - Run: ./deploy.sh")
     print("   - Follow the prompts to deploy your attendance system")
+    print("\n💡 If you installed Oh My Zsh, restart your terminal or run 'source ~/.zshrc' for the new theme!")
 
 
 if __name__ == "__main__":

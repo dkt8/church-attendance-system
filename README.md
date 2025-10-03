@@ -21,18 +21,18 @@ A comprehensive attendance tracking system that combines QR code generation, sca
 
 ## 🚀 Quick Start
 
-### 1. Clone and Setup
-
 ```bash
 git clone https://github.com/dkt8/church-attendance-system.git
 cd church-attendance-system
+python3 scripts/setup.py
 ```
 
-### 2. Run Setup Script
-
-```bash
-python scripts/setup.py
-```
+This single command will:
+- ✅ Create Python virtual environment
+- ✅ Install all dependencies  
+- ✅ Set up Google Apps Script tools
+- ✅ Install Oh My Zsh for prettier terminal
+- ✅ Configure everything automatically
 
 This will:
 - Create a Python virtual environment
