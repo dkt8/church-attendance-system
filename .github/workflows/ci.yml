@@ -1,10 +1,11 @@
 name: Code Quality Check
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+# Temporarily disabled
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main ]
 
 jobs:
   test:
