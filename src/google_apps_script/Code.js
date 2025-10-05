@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.2.4 ===
+// === QR Attendance Script - V3.2.7 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
@@ -97,13 +97,30 @@ function logScan(data) {
   }
 
   const nameOnly = parts.join(" "); // "Giuse Trần Hoàng Nguyên Khôi"
-  const normalized = normalize(nameOnly + birthday); // "giusetranhoangnguyenkhoi"
+  let normalized = normalize(nameOnly + birthday); // "giusetranhoangnguyenkhoi"
 
-  transfer_students = { "giusenguyengiabao": ["t1", "t2"], "annabuingoctu": ["t1", "t2"] }; // Example exceptional names
+  // handle special students: transfer, name change
+  // either you update name or class
+  transfer_students = {
+    "giusenguyengiabao": ["t1", "t2"],
+    "annabuingoctu": ["t1", "t2"],
+    // old name to new name
+    "phanxicoxduongquanghuy": ["c1", "phanxicoxduongquanguy"],
+    "nguyenvothienan": ["a1", "annanguyenvothienan"],
+    "mainhuy": ["a1", "mariamainhuy"],
+    "antonnguyenminhan": ["a2", "antonnguyenminhananthony"],
+    "teresatranphuongnghi": ["a3", "mariatranphuongnghi"]
+  };
+
   // check if student is in transfer list and their student card shows the old class
   if (normalized in transfer_students && transfer_students[normalized][0] == className) {
-    className = transfer_students[normalized][1]; // update to new class
-    console.log(`Transfer detected: ${nameOnly} from ${transfer_students[normalized][0]} to ${className}`);
+    if (transfer_students[normalized][1].length == 2) { // update to new class
+      className = transfer_students[normalized][1];
+      console.log(`Transfer detected: ${nameOnly} from ${transfer_students[normalized][0]} to ${className}`);
+    } else { // update to new name
+      normalized = transfer_students[normalized][1];
+      console.log(`Name change detected: ${nameOnly} to updated name ${normalized}`);
+    }
   }
 
   console.log(`Parsed: name="${nameOnly}", class="${className}", normalized="${normalized}"`);
@@ -136,7 +153,7 @@ function logScan(data) {
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   const ss = String(now.getSeconds()).padStart(2, "0");
-  const currentTime = `${hh}:${mm}:${ss}`;
+  let currentTime = `${hh}:${mm}:${ss}`;
 
   // Find today's column directly
   const baseCol = findTodayColumn(sheet);
@@ -151,10 +168,17 @@ function logScan(data) {
   }
 
   const col = (currentTime >= "10:00:00") ? baseCol + 1 : baseCol;
-  const status = (currentTime < "09:00:00") ? "X"
+  let status = (currentTime < "09:00:00") ? "X"
     : (currentTime < "09:10:00") ? "T"
       : (currentTime < "12:00:00") ? "X"
         : "O";
+
+  // Special evening schedule for du_truong class
+  if (className === "du_truong" && currentTime >= "18:00:00") {
+    status = (currentTime >= "19:20:00") ? "O"
+      : (currentTime >= "19:00:00") ? "T"
+        : "X";
+  }
 
   sheet.getRange(row, col).setValue(status);
   console.log(`Checked in ${nameOnly} → spreadsheet:${spreadsheetId}, row:${row}, col:${col}, status:${status}`);

@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-09-01
+
+## [3.0.0] - fast scan (master map) + one universal link
+    3.2.4 added dự bị bí tích class
+    3.2.5 update some student's info đợt 3
+    3.2.6 added logic to check in dự trưởng at the evening
+    3.2.7 fixed logic to check in dự trưởng at the evening (let them also be checked-in in the morning)
+## [2.0.0] - loop through class + multiple link
+## [1.0.0] - set up the system
 
 ### Added
 - Initial release of QR Code Attendance System
