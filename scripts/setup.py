@@ -36,25 +36,86 @@ def create_virtual_environment():
 
 def install_dependencies():
     """Install Python dependencies"""
-    activate_cmd = (
-        "source venv/bin/activate" if os.name != "nt" else "venv\\Scripts\\activate"
-    )
-    pip_cmd = f"{activate_cmd} && pip install -r requirements.txt"
+    if os.name != "nt":
+        # Use bash explicitly for source command on Unix systems
+        pip_cmd = "bash -c 'source venv/bin/activate && pip install -r requirements.txt'"
+    else:
+        pip_cmd = "venv\\Scripts\\activate && pip install -r requirements.txt"
     return run_command(pip_cmd, "Installing Python dependencies")
+
+
+def install_nodejs():
+    """Install Node.js if not already installed"""
+    # Check if Node.js is already installed
+    node_check = run_command("node --version", "Checking Node.js installation")
+    if node_check:
+        print(f"✅ Node.js is already installed: {node_check.strip()}")
+        return True
+    
+    print("📦 Node.js not found. Installing Node.js...")
+    
+    # Detect the operating system and install accordingly
+    if os.name == "nt":  # Windows
+        print("❌ Please install Node.js manually on Windows:")
+        print("   Download from https://nodejs.org")
+        return False
+    elif sys.platform == "darwin":  # macOS
+        # Try Homebrew first
+        if run_command("brew --version", "Checking Homebrew"):
+            return run_command("brew install node", "Installing Node.js via Homebrew")
+        else:
+            print("❌ Please install Node.js manually on macOS:")
+            print("   - Install Homebrew: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
+            print("   - Then run: brew install node")
+            print("   - Or download from https://nodejs.org")
+            return False
+    else:  # Linux
+        # Try to detect the Linux distribution
+        try:
+            with open("/etc/os-release", "r") as f:
+                os_release = f.read()
+            
+            if "ubuntu" in os_release.lower() or "debian" in os_release.lower():
+                # Ubuntu/Debian
+                print("🐧 Detected Ubuntu/Debian. Installing Node.js via apt...")
+                update_result = run_command("sudo apt update", "Updating package lists")
+                if update_result is not None:
+                    return run_command("sudo apt install -y nodejs npm", "Installing Node.js and npm")
+            elif "fedora" in os_release.lower() or "rhel" in os_release.lower() or "centos" in os_release.lower():
+                # Fedora/RHEL/CentOS
+                print("🎩 Detected Fedora/RHEL/CentOS. Installing Node.js via dnf/yum...")
+                return run_command("sudo dnf install -y nodejs npm || sudo yum install -y nodejs npm", "Installing Node.js and npm")
+            elif "arch" in os_release.lower():
+                # Arch Linux
+                print("🏹 Detected Arch Linux. Installing Node.js via pacman...")
+                return run_command("sudo pacman -S --noconfirm nodejs npm", "Installing Node.js and npm")
+            else:
+                print("❌ Unknown Linux distribution. Please install Node.js manually:")
+                print("   - Use your package manager (nodejs npm)")
+                print("   - Or download from https://nodejs.org")
+                return False
+        except FileNotFoundError:
+            print("❌ Could not detect Linux distribution. Please install Node.js manually:")
+            print("   - Use your package manager (nodejs npm)")
+            print("   - Or download from https://nodejs.org")
+            return False
+    
+    return False
 
 
 def check_node_and_install_clasp():
     """Check Node.js and install clasp for Google Apps Script deployment"""
-    # Check if Node.js is installed
-    node_check = run_command("node --version", "Checking Node.js installation")
-    if not node_check:
-        print("❌ Node.js is not installed. Please install Node.js first:")
-        print("   - macOS: brew install node")
-        print("   - Windows: Download from https://nodejs.org")
-        print("   - Linux: Use your package manager (e.g., apt install nodejs npm)")
+    # Install Node.js if not present
+    if not install_nodejs():
         return False
 
-    print(f"✅ Node.js is installed: {node_check.strip()}")
+    # Verify Node.js installation
+    node_check = run_command("node --version", "Verifying Node.js installation")
+    if not node_check:
+        print("❌ Node.js installation failed or not accessible")
+        return False
+
+    print(f"✅ Node.js is ready: {node_check.strip()}")
 
     # Check if clasp is already installed
     clasp_check = run_command("clasp --version", "Checking clasp installation")
@@ -338,35 +399,84 @@ def setup_zsh_prettification():
         print("✅ Oh My Zsh is already installed")
         return True
     
+    # Check if zsh is installed first
+    zsh_check = run_command("zsh --version", "Checking if zsh is installed")
+    if not zsh_check:
+        print("📦 Zsh not found. Installing zsh first...")
+        
+        # Install zsh based on the operating system
+        if os.name == "nt":  # Windows
+            print("⚠️  Zsh installation on Windows requires WSL or manual setup")
+            print("💡 Consider using Windows Terminal with PowerShell themes instead")
+            return True
+        elif sys.platform == "darwin":  # macOS
+            if run_command("brew --version", "Checking Homebrew"):
+                zsh_install = run_command("brew install zsh", "Installing zsh via Homebrew")
+                if not zsh_install:
+                    return True
+            else:
+                print("✅ Zsh is usually pre-installed on macOS")
+        else:  # Linux
+            try:
+                with open("/etc/os-release", "r") as f:
+                    os_release = f.read()
+                
+                if "ubuntu" in os_release.lower() or "debian" in os_release.lower():
+                    zsh_install = run_command("sudo apt install -y zsh", "Installing zsh via apt")
+                elif "fedora" in os_release.lower() or "rhel" in os_release.lower():
+                    zsh_install = run_command("sudo dnf install -y zsh || sudo yum install -y zsh", "Installing zsh")
+                elif "arch" in os_release.lower():
+                    zsh_install = run_command("sudo pacman -S --noconfirm zsh", "Installing zsh via pacman")
+                else:
+                    print("⚠️  Please install zsh manually using your package manager")
+                    return True
+                    
+                if not zsh_install:
+                    print("⚠️  Zsh installation failed, skipping Oh My Zsh")
+                    return True
+            except FileNotFoundError:
+                print("⚠️  Could not detect system, skipping zsh installation")
+                return True
+    
     print("📦 Installing Oh My Zsh for prettier terminal...")
-    print("⚠️  Note: This may prompt for user input during installation")
+    print("⚠️  Note: This installation will be unattended")
     
     # Install Oh My Zsh with unattended installation
-    install_cmd = 'sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
+    install_cmd = 'RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
     result = run_command(install_cmd, "Installing Oh My Zsh")
     
     if result is not None:
         print("🎉 Oh My Zsh installed successfully!")
-        print("💡 Your terminal will be prettier on next restart")
+        print("💡 Your terminal will be prettier when you switch to zsh")
+        print("💡 To switch to zsh: chsh -s $(which zsh)")
         print("💡 Popular themes: 'robbyrussell' (default), 'agnoster', 'powerlevel10k'")
         print("💡 To change theme: edit ~/.zshrc and change ZSH_THEME")
         
-        # Set a nice theme by default
+        # Keep the default robbyrussell theme (clean and simple)
         zshrc_path = Path.home() / ".zshrc"
         if zshrc_path.exists():
             try:
                 with open(zshrc_path, 'r') as f:
                     content = f.read()
                 
-                # Replace the default theme with agnoster (shows git branch nicely)
+                # Verify that robbyrussell theme is set (it should be the default)
                 if 'ZSH_THEME="robbyrussell"' in content:
-                    content = content.replace('ZSH_THEME="robbyrussell"', 'ZSH_THEME="agnoster"')
+                    print("✅ Using 'robbyrussell' theme (clean and simple)")
+                else:
+                    # If for some reason it's not robbyrussell, set it
+                    import re
+                    content = re.sub(r'ZSH_THEME="[^"]*"', 'ZSH_THEME="robbyrussell"', content)
                     with open(zshrc_path, 'w') as f:
                         f.write(content)
-                    print("✅ Set theme to 'agnoster' (shows git branches)")
+                    print("✅ Set theme to 'robbyrussell' (clean and simple)")
                 
             except Exception as e:
-                print(f"⚠️  Could not update theme: {e}")
+                print(f"⚠️  Could not verify theme: {e} (using default)")
+        
+        # Offer to change default shell
+        print("\n💡 Optional: To make zsh your default shell, run:")
+        print("   chsh -s $(which zsh)")
+        print("   (You'll need to log out and back in for this to take effect)")
         
         return True
     else:

@@ -1,3 +1,61 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "church-attendance-system"
+version = "1.0.0"
+description = "QR Code-based Church Attendance System with Google Sheets integration"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Church Attendance System", email = "info@example.com"},
+]
+keywords = ["qr-code", "attendance", "church", "google-sheets"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Religion",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "qrcode[pil]==7.4.2",
+    "Pillow>=10.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==23.7.0",
+    "flake8==6.0.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+]
+web = [
+    "flask>=2.3.3",
+    "fastapi>=0.103.1",
+]
+data = [
+    "pandas>=2.1.1",
+    "openpyxl>=3.1.2",
+    "pyyaml>=6.0.1",
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dkt8/church-attendance-system"
+Repository = "https://github.com/dkt8/church-attendance-system.git"
+Issues = "https://github.com/dkt8/church-attendance-system/issues"
+
+[project.scripts]
+church-attendance = "src:main"
+
 [tool.black]
 line-length = 88
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312', 'py313']
@@ -22,3 +80,34 @@ exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

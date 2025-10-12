@@ -14,31 +14,34 @@ A comprehensive attendance tracking system that combines QR code generation, sca
 
 ## 📋 Prerequisites
 
-- Python 3.7 or higher
 - Google Account with Google Sheets and Google Apps Script access
 - Modern web browser with camera support
-- pip (Python package installer)
+- Internet connection for automatic installations
+
+**Note**: Python, Node.js, and other dependencies will be installed automatically!
 
 ## 🚀 Quick Start
 
+### Standard Setup
+
+**Linux/macOS:**
 ```bash
 git clone https://github.com/dkt8/church-attendance-system.git
 cd church-attendance-system
-python3 scripts/setup.py
+./setup.sh
 ```
 
-This single command will:
-- ✅ Create Python virtual environment
-- ✅ Install all dependencies  
-- ✅ Set up Google Apps Script tools
-- ✅ Install Oh My Zsh for prettier terminal
-- ✅ Configure everything automatically
+**The setup script will automatically:**
+- ✅ **Install Python 3.8+** (if not present)
+- ✅ **Install Node.js** (for Google Apps Script)
+- ✅ **Create Python virtual environment**
+- ✅ **Install all Python dependencies**
+- ✅ **Install Google Apps Script CLI (clasp)**
+- ✅ **Install Zsh + Oh My Zsh** (prettier terminal)
+- ✅ **Configure all project files**
+- ✅ **Initialize Git repository**
 
-This will:
-- Create a Python virtual environment
-- Install required dependencies
-- Initialize Git repository
-- Set up configuration files
+**Everything is automated** - just run one command!
 
 ### 3. Configure Google Sheets
 
