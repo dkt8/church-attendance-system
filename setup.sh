@@ -104,7 +104,16 @@ install_python() {
         # Check if version is 3.8+
         if python3 -c "import sys; exit(0 if sys.version_info >= (3, 8) else 1)" 2>/dev/null; then
             print_status "Python version is sufficient (3.8+)"
-            return 0
+            
+            # But check if pip and venv are available
+            if ! python3 -m pip --version &> /dev/null; then
+                print_warning "pip is missing, installing Python development tools..."
+            elif ! python3 -m venv --help &> /dev/null; then
+                print_warning "venv is missing, installing Python development tools..."
+            else
+                print_status "Python tools (pip, venv) are available"
+                return 0
+            fi
         else
             print_warning "Python version is too old, attempting to upgrade..."
         fi
@@ -161,11 +170,46 @@ create_virtual_environment() {
     print_header "Creating Python Virtual Environment"
     
     if [ -d "venv" ]; then
-        print_status "Virtual environment already exists"
-        return 0
+        # Check if the virtual environment is working by creating a test script
+        cat > temp_venv_test.sh << 'EOF'
+#!/bin/bash
+set -e
+source venv/bin/activate
+python -m pip --version >/dev/null 2>&1
+echo "venv_working"
+EOF
+        chmod +x temp_venv_test.sh
+        
+        if ./temp_venv_test.sh >/dev/null 2>&1; then
+            print_status "Virtual environment already exists and is working"
+            rm -f temp_venv_test.sh
+            return 0
+        else
+            print_warning "Virtual environment exists but is broken, recreating..."
+            rm -rf venv
+            rm -f temp_venv_test.sh
+        fi
     fi
     
     run_command "python3 -m venv venv" "Creating virtual environment"
+    
+    # Verify the new virtual environment works
+    cat > temp_venv_verify.sh << 'EOF'
+#!/bin/bash
+set -e
+source venv/bin/activate
+python -m pip --version >/dev/null 2>&1
+EOF
+    chmod +x temp_venv_verify.sh
+    
+    if ./temp_venv_verify.sh; then
+        print_status "Virtual environment created and verified successfully"
+        rm -f temp_venv_verify.sh
+    else
+        print_error "Virtual environment creation failed"
+        rm -f temp_venv_verify.sh
+        exit 1
+    fi
 }
 
 # Function to install Python dependencies
@@ -177,8 +221,37 @@ install_python_dependencies() {
         exit 1
     fi
     
-    # Activate virtual environment and install dependencies
-    run_command "source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt" "Installing Python packages"
+    # Check if virtual environment exists and is working
+    if [ ! -f "venv/bin/activate" ]; then
+        print_error "Virtual environment not found or broken"
+        exit 1
+    fi
+    
+    # Create a temporary script to run commands with venv activated
+    print_step "Installing Python packages..."
+    
+    # Create temporary script that sources venv and runs pip commands
+    cat > temp_install.sh << 'EOF'
+#!/bin/bash
+set -e
+source venv/bin/activate
+echo "Virtual environment activated: $(which python)"
+echo "Using pip: $(which pip)"
+pip install --upgrade pip
+pip install -r requirements.txt
+echo "Installation completed successfully"
+EOF
+    
+    chmod +x temp_install.sh
+    
+    if ./temp_install.sh; then
+        print_status "Installing Python packages completed successfully"
+        rm -f temp_install.sh
+    else
+        print_error "Installing Python packages failed"
+        rm -f temp_install.sh
+        exit 1
+    fi
 }
 
 # Function to install Node.js
@@ -241,18 +314,26 @@ install_nodejs() {
 install_clasp() {
     print_header "Installing Google Apps Script CLI (clasp)"
     
+    # Check if clasp is already installed (including Windows/WSL paths)
+    if command -v clasp &> /dev/null; then
+        clasp_version=$(clasp --version 2>&1)
+        print_status "clasp is already installed: $clasp_version"
+        print_info "Skipping clasp installation"
+        return 0
+    fi
+    
     if ! command -v node &> /dev/null; then
         print_warning "Node.js not found, skipping clasp installation"
         return 0
     fi
     
-    if command -v clasp &> /dev/null; then
-        clasp_version=$(clasp --version 2>&1)
-        print_status "clasp is already installed: $clasp_version"
-        return 0
+    # Try without sudo first, then with sudo if it fails
+    if ! npm install -g @google/clasp@2.4.2 >/dev/null 2>&1; then
+        print_info "Permission denied, trying with sudo..."
+        run_command "sudo npm install -g @google/clasp@2.4.2" "Installing clasp (Google Apps Script CLI) with sudo"
+    else
+        print_status "Installing clasp (Google Apps Script CLI) completed successfully"
     fi
-    
-    run_command "npm install -g @google/clasp@2.4.2" "Installing clasp (Google Apps Script CLI)"
     
     # Verify installation
     if command -v clasp &> /dev/null; then

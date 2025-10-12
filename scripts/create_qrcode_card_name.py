@@ -2,7 +2,9 @@ import csv
 import os
 import re
 import sys
+import traceback
 from pathlib import Path
+import platform
 
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
@@ -76,11 +78,14 @@ def draw_name_text(draw, background, saint_name, last_name, first_name, note):
     text_x = int(bg_width * text_horizontal_percent / 100)
     text_y = int(bg_height * text_vertical_percent / 100)
 
-    # Modern bold font - great for readability
-    font = ImageFont.truetype(
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf", 60
-    )
-    
+    # Get font: macOS uses Arial Bold, Linux uses DejaVu Sans Bold
+    if platform.system() == "Darwin":  # macOS
+        font_path = Path("/System/Library/Fonts/Supplemental/Arial Bold.ttf").resolve()
+        font = ImageFont.truetype(str(font_path), 60)
+    else:  # Linux
+        font_path = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf").resolve()
+        font = ImageFont.truetype(str(font_path), 55)
+
     lines = []
     remaining = f"{last_name} {first_name} {note}".strip()
 
@@ -207,7 +212,17 @@ def main():
                 qr_count += 1
 
     except Exception as e:
-        print(f"❌ Error reading CSV file: {e}")
+        print(f"❌ Error: {e}")
+        print(f"\n📍 Full traceback:")
+        traceback.print_exc()
+        
+        # Get line number where error occurred
+        tb = traceback.extract_tb(e.__traceback__)
+        if tb:
+            error_line = tb[-1].lineno
+            error_file = tb[-1].filename
+            print(f"\n� Error occurred at line {error_line} in {os.path.basename(error_file)}")
+        
         sys.exit(1)
 
     print(
