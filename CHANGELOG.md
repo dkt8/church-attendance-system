@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     3.2.5 update some student's info đợt 3
     3.2.6 added logic to check in dự trưởng at the evening
     3.2.7 fixed logic to check in dự trưởng at the evening (let them also be checked-in in the morning)
+    3.2.8 handle danh sanh bo sung
 ## [2.0.0] - loop through class + multiple link
 ## [1.0.0] - set up the system
 
