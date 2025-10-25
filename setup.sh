@@ -254,6 +254,40 @@ EOF
     fi
 }
 
+# Function to install and configure pre-commit
+install_precommit() {
+    print_header "Installing Pre-commit Hooks"
+    
+    # Check if .pre-commit-config.yaml exists
+    if [ ! -f ".pre-commit-config.yaml" ]; then
+        print_warning "No .pre-commit-config.yaml found, skipping pre-commit setup"
+        return 0
+    fi
+    
+    # Create a temporary script to run with venv activated
+    cat > temp_precommit.sh << 'EOF'
+#!/bin/bash
+set -e
+source venv/bin/activate
+echo "Installing pre-commit..."
+pip install pre-commit
+echo "Installing pre-commit git hooks..."
+pre-commit install
+echo "Pre-commit setup completed"
+EOF
+    
+    chmod +x temp_precommit.sh
+    
+    if ./temp_precommit.sh; then
+        print_status "Pre-commit hooks installed successfully"
+        print_info "💡 Black and Flake8 will now run automatically on every commit"
+        rm -f temp_precommit.sh
+    else
+        print_warning "Pre-commit installation failed, but continuing"
+        rm -f temp_precommit.sh
+    fi
+}
+
 # Function to install Node.js
 install_nodejs() {
     print_header "Installing Node.js"
@@ -465,6 +499,76 @@ EOF
     fi
 }
 
+# Function to install VS Code extensions
+install_vscode_extensions() {
+    print_header "Installing VS Code Extensions"
+    
+    # Create extensions.json first (fallback for manual installation)
+    print_step "Creating VS Code extensions recommendations..."
+    mkdir -p .vscode
+    cat > .vscode/extensions.json << 'EOF'
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "mechatroner.rainbow-csv",
+        "eamodio.gitlens"
+    ]
+}
+EOF
+    print_status "Created .vscode/extensions.json"
+    
+    # Try to auto-install if VS Code CLI is available
+    if ! command -v code &> /dev/null; then
+        print_warning "VS Code CLI not found. Extensions will be recommended when you open VS Code."
+        print_info "💡 To enable auto-install, ensure 'code' command is available:"
+        print_info "   - macOS: Open VS Code → Command Palette → 'Install code command in PATH'"
+        print_info "   - Linux: Usually installed automatically with VS Code"
+        print_info "   - Windows WSL: Run 'code' from Windows, then install Shell Command"
+        return 0
+    fi
+    
+    print_status "VS Code CLI found. Auto-installing extensions..."
+    
+    # List of essential extensions
+    local extensions=(
+        "ms-python.python"
+        "ms-python.vscode-pylance"
+        "charliermarsh.ruff"
+        "mechatroner.rainbow-csv"
+        "eamodio.gitlens"
+    )
+    
+    local installed_count=0
+    local skipped_count=0
+    local failed_count=0
+    
+    for ext in "${extensions[@]}"; do
+        if code --list-extensions 2>/dev/null | grep -qi "^${ext}$"; then
+            print_info "  ✓ ${ext} (already installed)"
+            ((skipped_count++))
+        else
+            print_step "  Installing ${ext}..."
+            if code --install-extension "$ext" --force >/dev/null 2>&1; then
+                print_status "  ✅ Installed ${ext}"
+                ((installed_count++))
+            else
+                print_warning "  ⚠️  Failed to install ${ext}"
+                ((failed_count++))
+            fi
+        fi
+    done
+    
+    echo
+    print_status "Extension installation summary:"
+    print_info "  • Newly installed: ${installed_count}"
+    print_info "  • Already installed: ${skipped_count}"
+    if [ $failed_count -gt 0 ]; then
+        print_warning "  • Failed: ${failed_count}"
+    fi
+}
+
 # Function to install zsh and Oh My Zsh
 install_zsh_and_ohmyzsh() {
     print_header "Installing Zsh and Oh My Zsh"
@@ -589,9 +693,11 @@ main() {
     install_python
     create_virtual_environment
     install_python_dependencies
+    install_precommit
     install_nodejs
     install_clasp
     setup_gas_config
+    install_vscode_extensions
     install_zsh_and_ohmyzsh
     setup_git
     update_config

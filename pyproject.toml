@@ -32,8 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black==23.7.0",
-    "flake8==6.0.0",
+    "ruff==0.1.9",
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
 ]
@@ -56,30 +55,77 @@ Issues = "https://github.com/dkt8/church-attendance-system/issues"
 [project.scripts]
 church-attendance = "src:main"
 
-[tool.black]
+# ============================================================================
+# Ruff Configuration (replaces Black + Flake8 + isort)
+# ============================================================================
+[tool.ruff]
+# Same line length as Black
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312', 'py313']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+target-version = "py312"
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
+# Include Python files
+include = ["*.py", "*.pyi"]
+
+# Exclude directories
+exclude = [
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "output",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+# Enable rules:
+# E/W: pycodestyle errors and warnings
+# F: Pyflakes
+# I: isort (import sorting)
+# N: pep8-naming
+# UP: pyupgrade (modernize Python code)
+# B: flake8-bugbear (find likely bugs)
+# C4: flake8-comprehensions
+# SIM: flake8-simplify
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+]
+
+# Allow auto-fixing all enabled rules
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when prefixed with underscore
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Use Black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

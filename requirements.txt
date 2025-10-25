@@ -26,8 +26,8 @@ Pillow>=10.0.1
 # pandas==2.1.1
 
 # Development dependencies
-black==23.7.0
-flake8==6.0.0
+# Ruff: Modern, fast linter and formatter (replaces Black + Flake8 + isort)
+ruff==0.1.9
 # pytest==7.4.0
 # pytest-cov==4.1.0
 
