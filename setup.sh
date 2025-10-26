@@ -2,7 +2,7 @@
 # Church Attendance System - Complete Setup Script
 # This script will install everything needed including Python, Node.js, and Oh My Zsh
 
-set -e  # Exit on any error
+# Note: Not using 'set -e' to allow graceful handling of non-critical failures
 
 # Colors for pretty output
 RED='\033[0;31m'
@@ -545,18 +545,25 @@ EOF
     local failed_count=0
     
     for ext in "${extensions[@]}"; do
-        if code --list-extensions 2>/dev/null | grep -qi "^${ext}$"; then
-            print_info "  ✓ ${ext} (already installed)"
-            ((skipped_count++))
-        else
-            print_step "  Installing ${ext}..."
-            if code --install-extension "$ext" --force >/dev/null 2>&1; then
-                print_status "  ✅ Installed ${ext}"
-                ((installed_count++))
-            else
-                print_warning "  ⚠️  Failed to install ${ext}"
-                ((failed_count++))
+        # Check if extension is already installed (with error handling)
+        local installed_extensions=""
+        if installed_extensions=$(code --list-extensions 2>/dev/null); then
+            if echo "$installed_extensions" | grep -q "^${ext}$" 2>/dev/null; then
+                print_info "  ✓ ${ext} (already installed)"
+                ((skipped_count++))
+                continue
             fi
+        else
+            print_warning "  Could not list installed extensions, attempting installation anyway..."
+        fi
+        
+        print_step "  Installing ${ext}..."
+        if code --install-extension "$ext" --force >/dev/null 2>&1; then
+            print_status "  ✅ Installed ${ext}"
+            ((installed_count++))
+        else
+            print_warning "  ⚠️  Failed to install ${ext}"
+            ((failed_count++))
         fi
     done
     
@@ -689,18 +696,18 @@ main() {
     print_info "This will install Python, Node.js, and configure everything needed"
     echo
     
-    # Setup steps
-    install_python
-    create_virtual_environment
-    install_python_dependencies
-    install_precommit
-    install_nodejs
-    install_clasp
-    setup_gas_config
-    install_vscode_extensions
-    install_zsh_and_ohmyzsh
-    setup_git
-    update_config
+    # Setup steps - continue even if some fail
+    install_python || print_warning "Python installation had issues, but continuing..."
+    create_virtual_environment || { print_error "Virtual environment creation failed"; exit 1; }
+    install_python_dependencies || { print_error "Python dependencies installation failed"; exit 1; }
+    install_precommit || print_warning "Pre-commit installation had issues, but continuing..."
+    install_nodejs || print_warning "Node.js installation had issues, but continuing..."
+    install_clasp || print_warning "clasp installation had issues, but continuing..."
+    setup_gas_config || print_warning "Google Apps Script config had issues, but continuing..."
+    install_vscode_extensions || print_warning "VS Code extensions installation had issues, but continuing..."
+    install_zsh_and_ohmyzsh || print_warning "Zsh/Oh My Zsh installation had issues, but continuing..."
+    setup_git || print_warning "Git setup had issues, but continuing..."
+    update_config || print_warning "Config update had issues, but continuing..."
     
     # Final success message
     echo
