@@ -115,6 +115,7 @@ function logScan(data) {
     "nguyenvothienan": ["a1", "annanguyenvothienan"],
     "mainhuy": ["a1", "mariamainhuy"],
     "teresatranphuongnghi": ["a3", "mariatranphuongnghi"],
+    "marianguyentukhue": ["c1", "mariagiusenguyentukhue"],
   };
 
   // check if student is in transfer list and their student card shows the old class
