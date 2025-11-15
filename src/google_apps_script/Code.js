@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.2.7 ===
+// === QR Attendance Script - V3.2.8 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
@@ -102,22 +102,30 @@ function logScan(data) {
   // handle special students: transfer, name change
   // either you update name or class
   transfer_students = {
+    // change class
     "giusenguyengiabao": ["t1", "t2"],
     "annabuingoctu": ["t1", "t2"],
+    "nguyenminhananthony": ["a2", "a3"],
     // old name to new name
     "phanxicoxduongquanghuy": ["c1", "phanxicoxduongquanguy"],
     "nguyenvothienan": ["a1", "annanguyenvothienan"],
     "mainhuy": ["a1", "mariamainhuy"],
     "antonnguyenminhan": ["a2", "antonnguyenminhananthony"],
-    "teresatranphuongnghi": ["a3", "mariatranphuongnghi"]
+    "teresatranphuongnghi": ["a3", "mariatranphuongnghi"],
+    "nguyenvothienan": ["a1", "annanguyenvothienan"],
+    "mainhuy": ["a1", "mariamainhuy"],
+    "teresatranphuongnghi": ["a3", "mariatranphuongnghi"],
+    "marianguyentukhue": ["c1", "mariagiusenguyentukhue"],
   };
 
   // check if student is in transfer list and their student card shows the old class
   if (normalized in transfer_students && transfer_students[normalized][0] == className) {
-    if (transfer_students[normalized][1].length == 2) { // update to new class
+    // if length == 2, it's a class transfer
+    if (transfer_students[normalized][1].length == 2) { 
       className = transfer_students[normalized][1];
       console.log(`Transfer detected: ${nameOnly} from ${transfer_students[normalized][0]} to ${className}`);
-    } else { // update to new name
+    // else it's a name change
+    } else {
       normalized = transfer_students[normalized][1];
       console.log(`Name change detected: ${nameOnly} to updated name ${normalized}`);
     }

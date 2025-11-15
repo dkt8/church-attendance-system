@@ -10,7 +10,27 @@ Pillow>=10.0.1
 # Optional: For advanced image processing
 # opencv-python==4.8.1.78
 
-# Development dependencies (uncomment if needed)
-black==23.7.0
-flake8==6.0.0
+# Web framework for potential web interface
+# flask==2.3.3
+# fastapi==0.103.1
+
+# Configuration file handling
+# pyyaml==6.0.1
+# python-dotenv==1.0.0
+
+# Date/time handling
+# python-dateutil==2.8.2
+
+# Excel file support (alternative to CSV)
+# openpyxl==3.1.2
+# pandas==2.1.1
+
+# Development dependencies
+# Ruff: Modern, fast linter and formatter (replaces Black + Flake8 + isort)
+ruff==0.1.9
 # pytest==7.4.0
+# pytest-cov==4.1.0
+
+# Documentation
+# sphinx==7.1.2
+# mkdocs==1.5.2

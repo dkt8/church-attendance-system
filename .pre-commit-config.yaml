@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version (must match requirements.txt)
+    rev: v0.1.9
+    hooks:
+      # Run the linter (checks for errors and auto-fixes)
+      - id: ruff
+        args: [ --fix ]
+      # Run the formatter (replaces Black)
+      - id: ruff-format
