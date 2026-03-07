@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.2.8 ===
+// === QR Attendance Script - V3.3.0 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
@@ -71,6 +71,26 @@ function getSpreadsheetUrl() {
   return SpreadsheetApp.getActive().getUrl();
 }
 
+const AUDIT_SPREADSHEET_ID = "1VzCz-P5MVNTjb-sGUYYfRVEi8mUAvYvimcnY1T8Z8EE";
+function logAudit_(name, className, status, note) {
+  try {
+    const auditSS = SpreadsheetApp.openById(AUDIT_SPREADSHEET_ID);
+    const sheet = auditSS.getSheetByName("history");
+
+    sheet.appendRow([
+      new Date(),
+      name,
+      className,
+      status,
+      note
+    ]);
+
+  } catch (e) {
+    console.error("Audit log failed", e);
+  }
+}
+
+
 /**
  * logScan(data)
  * - Main function to record attendance quickly.
@@ -78,9 +98,19 @@ function getSpreadsheetUrl() {
  * - Uses master map to route to correct spreadsheet
  */
 function logScan(data) {
-  // data = "Giuse Trần Hoàng Nguyên Khôi c1" or
-  // data = "Giuse Trần Hoàng Nguyên Khôi c1 06/08/2019"
-  console.log(`logScan start: ${data}`);
+  // // data = "Giuse Trần Hoàng Nguyên Khôi c1" or
+  // // data = "Giuse Trần Hoàng Nguyên Khôi c1 06/08/2019"
+  // data = "Anna Nguyễn Gia Hân du_truong"
+  // // console.log(`logScan start: ${data}`);
+
+  // console.log(JSON.stringify({
+  //   event: "SCAN_START",
+  //   raw: data,
+  //   ts: Date.now()
+  // }));
+  
+
+  logAudit_(data, "X", "O", "SCAN_OK");
 
   // case1: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"] 
   // case2: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1", "06/08/2019"]
@@ -116,6 +146,33 @@ function logScan(data) {
     "mainhuy": ["a1", "mariamainhuy"],
     "teresatranphuongnghi": ["a3", "mariatranphuongnghi"],
     "marianguyentukhue": ["c1", "mariagiusenguyentukhue"],
+    "gioanbaotixitalehoangkyanh": ["a1", "gioanblehoangkyanh"],
+    "phanxicoxaviehoviettrungchinh": ["a3", "phanxicoxhoviettrungchinh"],
+    "gioanbaotixitaphamhoangdangkhoi": ["a3", "gioanbphamhoangdangkhoi"],
+    "gioanbaotixitatranphucnguyen": ["a3", "gioanbtranphucnguyen"],
+    "phanxicoxaviedaidien": ["t1", "phanxicoxdaidien"],
+    "gioanbaotixitatranphuckhang": ["t1", "gioanbtranphuckhang"],
+    "gioanbaotixitahonguyenminhthinh": ["t1", "gioanbhonguyenminhthinh"],
+    "gioanbaotixitatranthienan": ["t2", "gioanbtranthienan"],
+    "phanxicoxavienguyenhuyba": ["t2", "phanxicoxnguyenhuyba"],
+    "phanxicoassisiphamhoangbach": ["t2", "phanxicoaphamhoangbach"],
+    "mariaphaolokhoandoanngockimngan": ["t2", "mariapkhoandoanngockimngan"],
+    "gioanbaotixitadinhkhoinguyen": ["t2", "gioanbdinhkhoinguyen"],
+    "phanxicoxavienguyenphuctam": ["t2", "phanxicoxnguyenphuctam"],
+    "phanxicoxavienguyenhoangphucanh": ["t3", "phanxicoxavienguyenhoangphucanh"],
+    "gioanbaotixitaanbaolong": ["t3", "gioanbanbaolong"],
+    "gioanbaotixitavuhongnam": ["t3", "gioanbvuhongnam"],
+    "phanxicoxavienguyenhoanghongphuc": ["t3", "phanxicoxnguyenhoanghongphuc"],
+    "gioanbaotixitaphamhoangthai": ["t3", "gioanbphamhoangthai"],
+    "gioanbaotixitanguyenvotrungtin": ["t3", "gioanbnguyenvotrungtin"],
+    "gioanbaotixitatruongvuminhtuan": ["t3", "gioanbtruongvuminhtuan"],
+    "phanxicoxaviephamgiabach": ["n1", "phanxicoxphamgiabach"],
+    "gioanbaotixitaphamthienkhang": ["n1", "gioanbphamthienkhang"],
+    "gioanbaotixitanguyenlong": ["n1", "gioanbnguyenlong"],
+    "gioanbaotixitaphamnguyengiaphat": ["n1", "gioanbaotixitaphamnguyengiaphat"],
+    "phanxicoxavieletrungtin": ["n2", "phanxicoxletrungtin"],
+    "gioanbaotixitanguyenphuckhang": ["n2", "gioanbnguyenphuckhang"],
+    "mariaphaolokhoandoanngocminhthu": ["n3", "mariapkhoandoanngocminhthu"],
   };
 
   // check if student is in transfer list and their student card shows the old class
@@ -212,7 +269,7 @@ function findTodayColumn(sheet) {
   const headerRow = sheet.getRange(8, 1, 1, sheet.getLastColumn()).getValues()[0];
 
   // Check every 2 columns starting from column 6 (index 5)
-  for (let idx = 5; idx < headerRow.length; idx += 2) {
+  for (let idx = 40; idx < headerRow.length; idx++) {
     const cell = headerRow[idx];
     console.log(`Column ${idx + 1}: ${cell}`);
 
@@ -242,7 +299,8 @@ function normalize(text) {
   return text.trim().toLowerCase()
     .normalize('NFD')
     .replace(/đ/g, 'd')
-    .replace(/[\u0300-\u036f\s]/g, '');
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^\w]/g, ''); // Remove all non-word characters (spaces, punctuation, etc.)
 }
 
 /**
