@@ -1,4 +1,4 @@
-// === QR Attendance Script - V3.3.0 ===
+// === QR Attendance Script - V3.3.2 ===
 
 // Global in-memory cache for master map
 let _masterMap = null;  // Map: normalizedName → {spreadsheetId, row}
@@ -101,16 +101,11 @@ function logScan(data) {
   // // data = "Giuse Trần Hoàng Nguyên Khôi c1" or
   // // data = "Giuse Trần Hoàng Nguyên Khôi c1 06/08/2019"
   // data = "Anna Nguyễn Gia Hân du_truong"
-  // // console.log(`logScan start: ${data}`);
+  const logs = [];
+  const log = (msg) => { console.log(msg); logs.push(msg); };
 
-  // console.log(JSON.stringify({
-  //   event: "SCAN_START",
-  //   raw: data,
-  //   ts: Date.now()
-  // }));
-  
-
-  logAudit_(data, "X", "O", "SCAN_OK");
+  // Immediate audit — proof the request arrived
+  logAudit_(data, "", "RECEIVED", "");
 
   // case1: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1"] 
   // case2: parts = ["Giuse", "Trần", "Hoàng", "Nguyên", "Khôi", "c1", "06/08/2019"]
@@ -180,20 +175,21 @@ function logScan(data) {
     // if length == 2, it's a class transfer
     if (transfer_students[normalized][1].length == 2) { 
       className = transfer_students[normalized][1];
-      console.log(`Transfer detected: ${nameOnly} from ${transfer_students[normalized][0]} to ${className}`);
+      log(`Transfer detected: ${nameOnly} from ${transfer_students[normalized][0]} to ${className}`);
     // else it's a name change
     } else {
       normalized = transfer_students[normalized][1];
-      console.log(`Name change detected: ${nameOnly} to updated name ${normalized}`);
+      log(`Name change detected: ${nameOnly} to updated name ${normalized}`);
     }
   }
 
-  console.log(`Parsed: name="${nameOnly}", class="${className}", normalized="${normalized}"`);
+  log(`Parsed: name="${nameOnly}", class="${className}", normalized="${normalized}"`);
 
   // Use master map for multi-spreadsheet lookup
   const masterMap = getMasterMap();
   if (!(normalized in masterMap)) {
-    console.log(`Return error: Name not in masterMap: ${normalized}`);
+    log(`Name not in masterMap: ${normalized}`);
+    logAudit_(data, className, "ERROR", logs.join('\n'));
     return `Error: "${nameOnly}" not found in master map.`;
   }
 
@@ -201,7 +197,8 @@ function logScan(data) {
 
   // Validate that the requested class matches the spreadsheet
   if (!SPREADSHEET_MAP[className] || SPREADSHEET_MAP[className] !== spreadsheetId) {
-    console.log(`Return error: Class mismatch. "${nameOnly}" not found in class ${className}`);
+    log(`Class mismatch. "${nameOnly}" not found in class ${className}`);
+    logAudit_(data, className, "ERROR", logs.join('\n'));
     return `Error: "${nameOnly}" not found in class ${className}.`;
   }
 
@@ -210,7 +207,8 @@ function logScan(data) {
   const sheet = targetSpreadsheet.getSheetByName('Điểm danh');
 
   if (!sheet) {
-    console.log(`Return error: "Điểm danh" sheet missing in ${className} spreadsheet`);
+    log(`"Điểm danh" sheet missing in ${className} spreadsheet`);
+    logAudit_(data, className, "ERROR", logs.join('\n'));
     return `Error: "Điểm danh" sheet not found in ${className} spreadsheet.`;
   }
 
@@ -223,12 +221,14 @@ function logScan(data) {
   // Find today's column directly
   const baseCol = findTodayColumn(sheet);
   if (!baseCol) {
-    console.log(`Return error: No date column for today`);
+    log(`No date column for today`);
+    logAudit_(data, className, "ERROR", logs.join('\n'));
     return `Error: No matching column for today's date.`;
   }
 
   if (currentTime >= "09:10:00" && currentTime < "10:00:00") {
-    console.log(`Return skipped: Time within skip window: ${currentTime}`);
+    log(`Time within skip window: ${currentTime}`);
+    logAudit_(data, className, "SKIPPED", logs.join('\n'));
     return `Skipped: No attendance marked between 09:10 and 10:00 for ${nameOnly}`;
   }
 
@@ -246,10 +246,11 @@ function logScan(data) {
   }
 
   sheet.getRange(row, col).setValue(status);
-  console.log(`Checked in ${nameOnly} → spreadsheet:${spreadsheetId}, row:${row}, col:${col}, status:${status}`);
+  log(`Checked in ${nameOnly} → spreadsheet:${spreadsheetId}, row:${row}, col:${col}, status:${status}`);
 
   const successMsg = `Success: ${nameOnly} (${className}) checked in at ${hh}:${mm}:${ss}.`;
-  console.log(`Return success: ${successMsg}`);
+  log(`Return success: ${successMsg}`);
+  logAudit_(data, className, status, logs.join('\n'));
   return successMsg;
 }
 
@@ -268,7 +269,7 @@ function findTodayColumn(sheet) {
   // Get header row with dates (Row 8: 7/9/2025, 14/9/2025, 21/9/2025, 28/9/2025)
   const headerRow = sheet.getRange(8, 1, 1, sheet.getLastColumn()).getValues()[0];
 
-  // Check every 2 columns starting from column 6 (index 5)
+  // Check every 1 columns starting from column 6 (index 5)
   for (let idx = 40; idx < headerRow.length; idx++) {
     const cell = headerRow[idx];
     console.log(`Column ${idx + 1}: ${cell}`);
@@ -321,15 +322,12 @@ function buildMasterMap() {
 
       // Open the target spreadsheet
       const targetSpreadsheet = SpreadsheetApp.openById(spreadsheetId);
-
-      // Look for the "Điểm danh" sheet specifically
       const dataSheet = targetSpreadsheet.getSheetByName('Điểm danh');
 
       if (!dataSheet) {
         console.log(`Warning: "Điểm danh" sheet not found in ${classCode} spreadsheet`);
         continue;
       }
-
       console.log(`Found "Điểm danh" sheet in ${classCode}`);
 
       // Get all data from the sheet
@@ -408,8 +406,7 @@ function getMasterMap() {
 
   if (!raw) throw new Error('Master map could not be loaded.');
 
-  _masterMap = JSON.parse(raw);
-  return _masterMap;
+  return JSON.parse(raw);
 }
 
 /**
